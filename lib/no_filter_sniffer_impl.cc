@@ -76,48 +76,47 @@ namespace bluetooth {
             gr_vector_const_void_star& input_items,
             gr_vector_void_star&       output_items )
     {
-        for (double freq = d_low_freq; freq <= d_high_freq; freq += 1e6) {   
-            gr_complex *ch_samples = new gr_complex[noutput_items+100000];
-            gr_vector_void_star btch( 1 );
-            btch[0] = ch_samples;
-            double on_channel_energy, snr;
-            int ch_count = channel_samples( freq, input_items, btch, on_channel_energy, history() );
+        double freq = d_low_freq + (d_high_freq - d_low_freq)/2;
+        gr_complex *ch_samples = new gr_complex[noutput_items+100000];
+        gr_vector_void_star btch( 1 );
+        btch[0] = ch_samples;
+        double on_channel_energy, snr;
+        int ch_count = channel_samples( freq, input_items, btch, on_channel_energy, history() );
 
-            /* number of symbols available */
-            int sym_length = history();
-            char *symbols = new char[sym_length];
-            /* pointer to our starting place for sniff_ */
-            char *symp = symbols;
-            gr_vector_const_void_star cbtch( 1 );
-            cbtch[0] = ch_samples;
-            int len = channel_symbols( cbtch, symbols, ch_count );
-            delete [] ch_samples;
+        /* number of symbols available */
+        int sym_length = history();
+        char *symbols = new char[sym_length];
+        /* pointer to our starting place for sniff_ */
+        char *symp = symbols;
+        gr_vector_const_void_star cbtch( 1 );
+        cbtch[0] = ch_samples;
+        int len = channel_symbols( cbtch, symbols, ch_count );
+        delete [] ch_samples;
 
-            int limit = ((len - SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE) < SYMBOLS_PER_BASIC_RATE_SLOT) ? 
-                (len - SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE) : SYMBOLS_PER_BASIC_RATE_SLOT;
+        int limit = ((len - SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE) < SYMBOLS_PER_BASIC_RATE_SLOT) ? 
+            (len - SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE) : SYMBOLS_PER_BASIC_RATE_SLOT;
 
-            /* look for multiple packets in this slot */
-            while (limit >= 0) {
-                /* index to start of packet */
-                int i = classic_packet::sniff_ac(symp, limit);
-                if (i >= 0) {
-                    int step = i + SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE;
-                    ac(&symp[i], len - i, freq, snr);
-                    len   -= step;
-                    if(step >= sym_length)
-                    {
-                        fprintf(stderr, "Error: %s\n", "Bad step"); 
-                        abort();
-                    }
-                    symp   = &symp[step];
-                    limit -= step;
-                } 
-                else {
-                    break;
+        /* look for multiple packets in this slot */
+        while (limit >= 0) {
+            /* index to start of packet */
+            int i = classic_packet::sniff_ac(symp, limit);
+            if (i >= 0) {
+                int step = i + SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE;
+                ac(&symp[i], len - i, freq, snr);
+                len   -= step;
+                if(step >= sym_length)
+                {
+                    fprintf(stderr, "Error: %s\n", "Bad step"); 
+                    abort();
                 }
+                symp   = &symp[step];
+                limit -= step;
+            } 
+            else {
+                break;
             }
-            delete [] symbols;
         }
+        delete [] symbols;
         d_cumulative_count += (int) d_samples_per_slot;
 
         /* 
