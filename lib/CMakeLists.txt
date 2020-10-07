@@ -31,6 +31,7 @@ list(APPEND bluetooth_sources
     multi_LAP_impl.cc
     multi_sniffer_impl.cc
     multi_UAP_impl.cc
+    no_filter_sniffer_impl.cc
     packet_impl.cc
     piconet_impl.cc
 )
