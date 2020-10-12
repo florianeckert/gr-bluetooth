@@ -29,6 +29,9 @@
 
 #include <gnuradio/io_signature.h>
 #include "no_filter_sniffer_impl.h"
+#include <gnuradio/digital/clock_recovery_mm_ff.h>
+#include <gnuradio/analog/quadrature_demod_cf.h>
+#include <gnuradio/digital/binary_slicer_fb.h>
 
 namespace gr {
 namespace bluetooth {
@@ -81,7 +84,62 @@ namespace bluetooth {
         gr_vector_void_star btch( 1 );
         btch[0] = ch_samples;
         double on_channel_energy, snr;
-        int ch_count = channel_samples( freq, input_items, btch, on_channel_energy, history() );
+        //int ch_count = channel_samples( freq, input_items, btch, on_channel_energy, history() );
+        btch[0] = (gr_complex*) input_items[0];
+        int ch_count = history();
+
+        /* fm demod */
+        float gain = d_samples_per_symbol / M_PI_2;
+        gr::analog::quadrature_demod_cf::sptr fm_demod = 
+            gr::analog::quadrature_demod_cf::make(gain);
+        int fm_noutput_items = fm_demod->fixed_rate_ninput_to_noutput(ch_count);
+        gr_vector_const_void_star fm_in(1);
+        fm_in[0] = (gr_complex*) input_items[0];
+        float fm_out_stream[fm_noutput_items];
+        gr_vector_void_star fm_out(1);
+        fm_out[0] = &fm_out_stream[0];        
+        fm_noutput_items = fm_demod->work(fm_noutput_items, fm_in, fm_out);
+
+        /* mmcr */
+        float omega = d_samples_per_symbol;
+        float gain_omega = .25 * d_gain_mu * d_gain_mu;
+        float mu = 0.32;
+        float gain_mu = 0.175;
+        float omega_relative_limit = 0.005;
+        gr::digital::clock_recovery_mm_ff::sptr mm_cr =
+            gr::digital::clock_recovery_mm_ff::make(omega, gain_omega, mu, gain_mu, omega_relative_limit);
+        /* number of input items */
+        int mm_ninput_items_stream = fm_noutput_items;
+        gr_vector_int mm_ninput_items(1);
+        mm_ninput_items[0] = mm_ninput_items_stream;
+        /* number of output items */
+        int mm_noutput_items = mm_ninput_items_stream;
+        /* input items */
+        gr_vector_const_void_star mm_in(1);
+        mm_in[0] = (float*) fm_out[0];
+        /* output items */
+        float mm_out_stream[mm_noutput_items];
+        gr_vector_void_star mm_out(1);
+        mm_out[0] = &mm_out_stream[0];
+        std::cout << mm_noutput_items << std::endl;
+        mm_noutput_items = mm_cr->general_work(mm_noutput_items, mm_ninput_items, mm_in, mm_out);
+
+        /* binary slicer */
+        gr::digital::binary_slicer_fb::sptr bin_slice =
+            gr::digital::binary_slicer_fb::make();
+        int bs_noutput_items = bin_slice->fixed_rate_ninput_to_noutput(mm_noutput_items);
+        gr_vector_const_void_star bs_in(1);
+        bs_in[0] = (float*) mm_out[0];
+        float bs_out_stream[bs_noutput_items];
+        gr_vector_void_star bs_out(1);
+        bs_out[0] = &bs_out_stream[0];
+        bs_noutput_items = bin_slice->work(bs_noutput_items, bs_in, bs_out);
+
+//        int sym_length = history();
+//        char *symbols = new char[sym_length];
+//        int len = bs_noutput_items;
+//        symbols = (char*) bs_out[0];
+//        char *symp = symbols;
 
         /* number of symbols available */
         int sym_length = history();
@@ -92,6 +150,8 @@ namespace bluetooth {
         cbtch[0] = ch_samples;
         int len = channel_symbols( cbtch, symbols, ch_count );
         delete [] ch_samples;
+
+        std::cout << len << std::endl;
 
         int limit = ((len - SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE) < SYMBOLS_PER_BASIC_RATE_SLOT) ? 
             (len - SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE) : SYMBOLS_PER_BASIC_RATE_SLOT;

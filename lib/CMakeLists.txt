@@ -50,6 +50,8 @@ target_link_libraries(gnuradio-bluetooth gnuradio::gnuradio-runtime
   gnuradio::gnuradio-blocks
   gnuradio::gnuradio-filter
   gnuradio::gnuradio-fft
+  gnuradio::gnuradio-analog
+  gnuradio::gnuradio-digital
   Python::Python
   )
 target_include_directories(gnuradio-bluetooth

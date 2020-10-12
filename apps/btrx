@@ -145,8 +145,10 @@ class my_top_block(gr.top_block):
 											 options.snr, options.wireshark)
 		elif options.lap is None:
 			# print out LAP for every frame detected
-			dst = gr_bluetooth.multi_LAP(options.sample_rate, options.freq,
-										 options.snr)
+			#dst = gr_bluetooth.multi_LAP(options.sample_rate, options.freq,
+			#							 options.snr)
+			dst = gr_bluetooth.no_filter_sniffer(options.sample_rate, options.freq,
+										 options.snr, options.wireshark)
 		elif options.hop:
 			# determine UAP and then master clock from hopping sequence
 			dst = gr_bluetooth.multi_hopper(options.sample_rate, options.freq,
