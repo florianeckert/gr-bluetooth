@@ -29,6 +29,9 @@
 #include "gr_bluetooth/no_filter_sniffer.h"
 #include "gr_bluetooth/packet.h"
 #include "gr_bluetooth/piconet.h"
+#include <gnuradio/digital/clock_recovery_mm_ff.h>
+#include <gnuradio/analog/quadrature_demod_cf.h>
+#include <gnuradio/digital/binary_slicer_fb.h>
 #include "tun.h"
 #include <map>
 
@@ -50,6 +53,11 @@ namespace gr {
       char d_chan_name[20];
       unsigned char d_ether_addr[ETH_ALEN];
       static const unsigned short ETHER_TYPE = 0xFFF0;
+
+      /* Blocks */
+      gr::analog::quadrature_demod_cf::sptr fm_demod;
+      gr::digital::clock_recovery_mm_ff::sptr mm_cr;
+      gr::digital::binary_slicer_fb::sptr bin_slice;
 
       /* the piconets we are monitoring */
       std::map<int, basic_rate_piconet::sptr> d_basic_rate_piconets;
