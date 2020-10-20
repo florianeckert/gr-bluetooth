@@ -29,7 +29,6 @@
 #include "gr_bluetooth/no_filter_sniffer.h"
 #include "gr_bluetooth/packet.h"
 #include "gr_bluetooth/piconet.h"
-#include "tun.h"
 #include <math.h>
 #include <map>
 
@@ -64,15 +63,6 @@ namespace bluetooth {
             static const uint32_t GIAC = 0x9E8B33;
             static const uint32_t LIAC = 0x9E8B00;
 
-            /* Using tun for output */
-            bool d_tun;
-
-            /* Tun stuff */
-            int d_tunfd;
-            char d_chan_name[20];
-            unsigned char d_ether_addr[ETH_ALEN];
-            static const unsigned short ETHER_TYPE = 0xFFF0;
-
             /* the piconets we are monitoring */
             std::map<int, basic_rate_piconet::sptr> d_basic_rate_piconets;
 
@@ -96,7 +86,7 @@ namespace bluetooth {
             void fhs(classic_packet::sptr pkt);
 
         public:
-            no_filter_sniffer_impl(double sample_rate, double center_freq, double squelch_threshold, bool tun);
+            no_filter_sniffer_impl(double sample_rate, double center_freq);
             ~no_filter_sniffer_impl();
 
             // Where all the action really happens

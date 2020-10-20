@@ -33,18 +33,15 @@
 namespace gr {
 namespace bluetooth {
 
-    no_filter_sniffer::sptr no_filter_sniffer::make(double sample_rate, double center_freq,
-            double squelch_threshold, bool tun)
+    no_filter_sniffer::sptr no_filter_sniffer::make(double sample_rate, double center_freq)
     {
-        return gnuradio::get_initial_sptr (new no_filter_sniffer_impl(sample_rate, center_freq, 
-                    squelch_threshold, tun));
+        return gnuradio::get_initial_sptr (new no_filter_sniffer_impl(sample_rate, center_freq));
     }
 
     /*
      * The private constructor
      */
-    no_filter_sniffer_impl::no_filter_sniffer_impl(double sample_rate, double center_freq,
-            double squelch_threshold, bool tun)
+    no_filter_sniffer_impl::no_filter_sniffer_impl(double sample_rate, double center_freq)
         : gr::sync_block ("bluetooth no filter sniffer block",
                 gr::io_signature::make (1, 1, sizeof (int8_t)),
                 gr::io_signature::make (0, 0, 0))
@@ -54,20 +51,10 @@ namespace bluetooth {
         d_channel = round(center);
         d_channel_freq = BASE_FREQUENCY + (d_channel * CHANNEL_WIDTH);
 
+        d_cumulative_count = 0;
+
         /* we want to have 5 slots (max packet length) available in the history */
         set_history((sample_rate/SYMBOL_RATE)*SYMBOLS_FOR_BASIC_RATE_HISTORY);
-
-//FIXME        d_tun = tun;
-        /* Tun interface */
-//FIXME        if (d_tun) {
-//            strncpy(d_chan_name, "btbb", sizeof(d_chan_name)-1);
-//            if ((d_tunfd = mktun(d_chan_name, d_ether_addr)) == -1) {
-//                fprintf(stderr,
-//                        "warning: was not able to open TUN device, "
-//                        "disabling Wireshark interface\n");
-//                // throw std::runtime_error("cannot open TUN device");
-//            }
-//        }
     }
 
     /*
@@ -148,9 +135,6 @@ namespace bluetooth {
     void no_filter_sniffer_impl::id(uint32_t lap)
     {
         printf("ID\n");
-        if (d_tun) {
-            write_interface(d_tunfd, NULL, 0, 0, lap, ETHER_TYPE);
-        }
     }
 
     /* decode packets with headers */
@@ -168,22 +152,6 @@ namespace bluetooth {
 
         if (pkt->got_payload()) {
             pkt->print();
-            if (d_tun) {
-                uint64_t addr = (pkt->get_UAP() << 24) | pkt->get_LAP();
-
-                if (pn->have_NAP()) {
-                    addr |= ((uint64_t) pn->get_NAP()) << 32;
-                    pkt->set_NAP(pn->get_NAP());
-                }
-
-                /* include 9 bytes for meta data & packet header */
-                int length = pkt->get_payload_length() + 9;
-                char *data = pkt->tun_format();
-
-                write_interface(d_tunfd, (unsigned char *)data, length,
-                        0, addr, ETHER_TYPE);
-                free(data);
-            }
             if (pkt->get_type() == 2)
                 fhs(pkt);
         } else if (first_run) {

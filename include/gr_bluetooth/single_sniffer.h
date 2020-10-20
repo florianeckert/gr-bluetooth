@@ -1,9 +1,6 @@
 /* -*- c++ -*- */
 /* 
- * Copyright 2013 Christopher D. Kilgour
- * Copyright 2008, 2009 Dominic Spill, Michael Ossmann
- * Copyright 2007 Dominic Spill
- * Copyright 2005, 2006 Free Software Foundation, Inc.
+ * Copyright 2020 Free Software Foundation, Inc.
  * 
  * This file is part of gr-bluetooth
  * 
@@ -24,11 +21,11 @@
  */
 
 
-#ifndef INCLUDED_GR_BLUETOOTH_NO_FILTER_SNIFFER_H
-#define INCLUDED_GR_BLUETOOTH_NO_FILTER_SNIFFER_H
+#ifndef INCLUDED_GR_BLUETOOTH_SINGLE_SNIFFER_H
+#define INCLUDED_GR_BLUETOOTH_SINGLE_SNIFFER_H
 
 #include <gr_bluetooth/api.h>
-#include <gnuradio/sync_block.h>
+#include <gnuradio/hier_block2.h>
 
 namespace gr {
 namespace bluetooth {
@@ -38,17 +35,17 @@ namespace bluetooth {
      * \ingroup bluetooth
      *
      */
-    class GR_BLUETOOTH_API no_filter_sniffer : virtual public gr::sync_block
+    class GR_BLUETOOTH_API single_sniffer : virtual public gr::hier_block2
     {
         public:
-            typedef boost::shared_ptr<no_filter_sniffer> sptr;
+            typedef boost::shared_ptr<single_sniffer> sptr;
 
             /*!
-             * \brief Return a shared_ptr to a new instance of gr::bluetooth::no_filter_sniffer.
+             * \brief Return a shared_ptr to a new instance of gr::bluetooth::single_sniffer.
              *
-             * To avoid accidental use of raw pointers, gr::bluetooth::no_filter_sniffer's
+             * To avoid accidental use of raw pointers, gr::bluetooth::single_sniffer's
              * constructor is in a private implementation
-             * class. gr::bluetooth::no_filter_sniffer::make is the public interface for
+             * class. gr::bluetooth::single_sniffer::make is the public interface for
              * creating new instances.
              */
             static sptr make(double sample_rate, double center_freq);
@@ -57,5 +54,5 @@ namespace bluetooth {
 } // namespace bluetooth
 } // namespace gr
 
-#endif /* INCLUDED_GR_BLUETOOTH_NO_FILTER_SNIFFER_H */
+#endif /* INCLUDED_GR_BLUETOOTH_SINGLE_SNIFFER_H */
 
