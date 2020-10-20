@@ -31,7 +31,7 @@
 #include <gnuradio/sync_block.h>
 
 namespace gr {
-  namespace bluetooth {
+namespace bluetooth {
 
     /*!
      * \brief <+description of block+>
@@ -40,21 +40,21 @@ namespace gr {
      */
     class GR_BLUETOOTH_API no_filter_sniffer : virtual public gr::sync_block
     {
-    public:
-       typedef boost::shared_ptr<no_filter_sniffer> sptr;
+        public:
+            typedef boost::shared_ptr<no_filter_sniffer> sptr;
 
-       /*!
-        * \brief Return a shared_ptr to a new instance of gr::bluetooth::no_filter_sniffer.
-        *
-        * To avoid accidental use of raw pointers, gr::bluetooth::no_filter_sniffer's
-        * constructor is in a private implementation
-        * class. gr::bluetooth::no_filter_sniffer::make is the public interface for
-        * creating new instances.
-        */
-       static sptr make(double sample_rate, double center_freq, double squelch_threshold, bool tun);
+            /*!
+             * \brief Return a shared_ptr to a new instance of gr::bluetooth::no_filter_sniffer.
+             *
+             * To avoid accidental use of raw pointers, gr::bluetooth::no_filter_sniffer's
+             * constructor is in a private implementation
+             * class. gr::bluetooth::no_filter_sniffer::make is the public interface for
+             * creating new instances.
+             */
+            static sptr make(double sample_rate, double center_freq, double squelch_threshold, bool tun);
     };
 
-  } // namespace bluetooth
+} // namespace bluetooth
 } // namespace gr
 
 #endif /* INCLUDED_GR_BLUETOOTH_NO_FILTER_SNIFFER_H */

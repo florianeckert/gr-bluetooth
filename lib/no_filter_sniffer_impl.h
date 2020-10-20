@@ -34,78 +34,78 @@
 #include <map>
 
 namespace gr {
-  namespace bluetooth {
+namespace bluetooth {
 
     class no_filter_sniffer_impl : virtual public no_filter_sniffer
     {
-    private:
-      /* symbols per second */
-      static const int SYMBOL_RATE = 1000000;
-      static const int SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE = 68; 
+        private:
+            /* symbols per second */
+            static const int SYMBOL_RATE = 1000000;
+            static const int SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE = 68; 
 
-      /* length of time slot in symbols */
-      static const int SYMBOLS_PER_BASIC_RATE_SLOT    = 625;
-      static const int SYMBOLS_FOR_BASIC_RATE_HISTORY = 3125;
+            /* length of time slot in symbols */
+            static const int SYMBOLS_PER_BASIC_RATE_SLOT    = 625;
+            static const int SYMBOLS_FOR_BASIC_RATE_HISTORY = 3125;
 
-      /* channel 0 in Hz */
-      static const uint32_t BASE_FREQUENCY = 2402000000UL;
+            /* channel 0 in Hz */
+            static const uint32_t BASE_FREQUENCY = 2402000000UL;
 
-      /* channel width in Hz */
-      static const int CHANNEL_WIDTH = 1000000;
+            /* channel width in Hz */
+            static const int CHANNEL_WIDTH = 1000000;
 
-      /* total number of samples elapsed */
-      uint64_t d_cumulative_count;
+            /* total number of samples elapsed */
+            uint64_t d_cumulative_count;
 
-      /* frequency and number of the channel being decoded */
-      double d_channel_freq;
-      int d_channel;
+            /* frequency and number of the channel being decoded */
+            double d_channel_freq;
+            int d_channel;
 
-      /* General Inquiry and Limited Inquiry Access Codes */
-      static const uint32_t GIAC = 0x9E8B33;
-      static const uint32_t LIAC = 0x9E8B00;
+            /* General Inquiry and Limited Inquiry Access Codes */
+            static const uint32_t GIAC = 0x9E8B33;
+            static const uint32_t LIAC = 0x9E8B00;
 
-      /* Using tun for output */
-      bool d_tun;
+            /* Using tun for output */
+            bool d_tun;
 
-      /* Tun stuff */
-      int d_tunfd;
-      char d_chan_name[20];
-      unsigned char d_ether_addr[ETH_ALEN];
-      static const unsigned short ETHER_TYPE = 0xFFF0;
+            /* Tun stuff */
+            int d_tunfd;
+            char d_chan_name[20];
+            unsigned char d_ether_addr[ETH_ALEN];
+            static const unsigned short ETHER_TYPE = 0xFFF0;
 
-      /* the piconets we are monitoring */
-      std::map<int, basic_rate_piconet::sptr> d_basic_rate_piconets;
+            /* the piconets we are monitoring */
+            std::map<int, basic_rate_piconet::sptr> d_basic_rate_piconets;
 
-      /* handle AC */
-      void ac(char *symbols, int max_len, double freq, int offset);
+            /* handle AC */
+            void ac(char *symbols, int max_len, double freq, int offset);
 
-      /* handle ID packet (no header) */
-      void id(uint32_t lap);
+            /* handle ID packet (no header) */
+            void id(uint32_t lap);
 
-      /* decode packets with headers */
-      void decode(classic_packet::sptr pkt, basic_rate_piconet::sptr pn,
-                  bool first_run);
+            /* decode packets with headers */
+            void decode(classic_packet::sptr pkt, basic_rate_piconet::sptr pn,
+                    bool first_run);
 
-      /* work on UAP/CLK1-6 discovery */
-      void discover(classic_packet::sptr pkt, basic_rate_piconet::sptr pn);
+            /* work on UAP/CLK1-6 discovery */
+            void discover(classic_packet::sptr pkt, basic_rate_piconet::sptr pn);
 
-      /* decode stored packets */
-      void recall(basic_rate_piconet::sptr pn);
+            /* decode stored packets */
+            void recall(basic_rate_piconet::sptr pn);
 
-      /* pull information out of FHS packet */
-      void fhs(classic_packet::sptr pkt);
+            /* pull information out of FHS packet */
+            void fhs(classic_packet::sptr pkt);
 
-    public:
-      no_filter_sniffer_impl(double sample_rate, double center_freq, double squelch_threshold, bool tun);
-      ~no_filter_sniffer_impl();
+        public:
+            no_filter_sniffer_impl(double sample_rate, double center_freq, double squelch_threshold, bool tun);
+            ~no_filter_sniffer_impl();
 
-      // Where all the action really happens
-      int work(int                        noutput_items,
-	       gr_vector_const_void_star& input_items,
-	       gr_vector_void_star&       output_items);
+            // Where all the action really happens
+            int work(int                        noutput_items,
+                    gr_vector_const_void_star& input_items,
+                    gr_vector_void_star&       output_items);
     };
 
-  } // namespace bluetooth
+} // namespace bluetooth
 } // namespace gr
 
 #endif /* INCLUDED_BLUETOOTH_GR_BLUETOOTH_NO_FILTER_SNIFFER_IMPL_H */
