@@ -29,10 +29,8 @@
 #include "gr_bluetooth/no_filter_sniffer.h"
 #include "gr_bluetooth/packet.h"
 #include "gr_bluetooth/piconet.h"
-#include <gnuradio/digital/clock_recovery_mm_ff.h>
-#include <gnuradio/analog/quadrature_demod_cf.h>
-#include <gnuradio/digital/binary_slicer_fb.h>
 #include "tun.h"
+#include <math.h>
 #include <map>
 
 namespace gr {
@@ -41,6 +39,27 @@ namespace gr {
     class no_filter_sniffer_impl : virtual public no_filter_sniffer
     {
     private:
+      /* symbols per second */
+      static const int SYMBOL_RATE = 1000000;
+      static const int SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE = 68; 
+
+      /* length of time slot in symbols */
+      static const int SYMBOLS_PER_BASIC_RATE_SLOT    = 625;
+      static const int SYMBOLS_FOR_BASIC_RATE_HISTORY = 3125;
+
+      /* channel 0 in Hz */
+      static const uint32_t BASE_FREQUENCY = 2402000000UL;
+
+      /* channel width in Hz */
+      static const int CHANNEL_WIDTH = 1000000;
+
+      /* total number of samples elapsed */
+      uint64_t d_cumulative_count;
+
+      /* frequency and number of the channel being decoded */
+      double d_channel_freq;
+      int d_channel;
+
       /* General Inquiry and Limited Inquiry Access Codes */
       static const uint32_t GIAC = 0x9E8B33;
       static const uint32_t LIAC = 0x9E8B00;
@@ -54,16 +73,11 @@ namespace gr {
       unsigned char d_ether_addr[ETH_ALEN];
       static const unsigned short ETHER_TYPE = 0xFFF0;
 
-      /* Blocks */
-      gr::analog::quadrature_demod_cf::sptr fm_demod;
-      gr::digital::clock_recovery_mm_ff::sptr mm_cr;
-      gr::digital::binary_slicer_fb::sptr bin_slice;
-
       /* the piconets we are monitoring */
       std::map<int, basic_rate_piconet::sptr> d_basic_rate_piconets;
 
       /* handle AC */
-      void ac(char *symbols, int len, double freq, double snr);
+      void ac(char *symbols, int max_len, double freq, int offset);
 
       /* handle ID packet (no header) */
       void id(uint32_t lap);

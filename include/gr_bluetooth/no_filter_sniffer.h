@@ -28,7 +28,7 @@
 #define INCLUDED_GR_BLUETOOTH_NO_FILTER_SNIFFER_H
 
 #include <gr_bluetooth/api.h>
-#include "gr_bluetooth/multi_block.h"
+#include <gnuradio/sync_block.h>
 
 namespace gr {
   namespace bluetooth {
@@ -38,7 +38,7 @@ namespace gr {
      * \ingroup bluetooth
      *
      */
-    class GR_BLUETOOTH_API no_filter_sniffer : virtual public multi_block
+    class GR_BLUETOOTH_API no_filter_sniffer : virtual public gr::sync_block
     {
     public:
        typedef boost::shared_ptr<no_filter_sniffer> sptr;

@@ -45,39 +45,29 @@ namespace bluetooth {
      */
     no_filter_sniffer_impl::no_filter_sniffer_impl(double sample_rate, double center_freq,
             double squelch_threshold, bool tun)
-        : multi_block(sample_rate, center_freq, squelch_threshold),
-        gr::sync_block ("bluetooth multi sniffer block",
-                gr::io_signature::make (1, 1, sizeof (gr_complex)),
+        : gr::sync_block ("bluetooth multi sniffer block",
+                gr::io_signature::make (1, 1, sizeof (int8_t)),
                 gr::io_signature::make (0, 0, 0))
     {
-        d_tun = tun;
-        set_symbol_history(SYMBOLS_FOR_BASIC_RATE_HISTORY);
+        /* set channel_freq and channel to bluetooth channel closest to center freq */
+        double center = (center_freq - BASE_FREQUENCY) / CHANNEL_WIDTH;
+        d_channel = round(center);
+        d_channel_freq = BASE_FREQUENCY + (d_channel * CHANNEL_WIDTH);
 
+        /* we want to have 5 slots (max packet length) available in the history */
+        set_history((sample_rate/SYMBOL_RATE)*SYMBOLS_FOR_BASIC_RATE_HISTORY);
+
+//FIXME        d_tun = tun;
         /* Tun interface */
-        if (d_tun) {
-            strncpy(d_chan_name, "btbb", sizeof(d_chan_name)-1);
-            if ((d_tunfd = mktun(d_chan_name, d_ether_addr)) == -1) {
-                fprintf(stderr,
-                        "warning: was not able to open TUN device, "
-                        "disabling Wireshark interface\n");
-                // throw std::runtime_error("cannot open TUN device");
-            }
-        }
-
-        /* fm demod */
-        float gain = d_samples_per_symbol / M_PI_2;
-        fm_demod = gr::analog::quadrature_demod_cf::make(gain);
-
-        /* mmcr */
-        float omega = d_samples_per_symbol;
-        float gain_omega = .25 * d_gain_mu * d_gain_mu;
-        float mu = 0.32;
-        float gain_mu = 0.175;
-        float omega_relative_limit = 0.005;
-        mm_cr = gr::digital::clock_recovery_mm_ff::make(omega, gain_omega, mu, gain_mu, omega_relative_limit);
-
-        /* binary slicer */
-        bin_slice = gr::digital::binary_slicer_fb::make();
+//FIXME        if (d_tun) {
+//            strncpy(d_chan_name, "btbb", sizeof(d_chan_name)-1);
+//            if ((d_tunfd = mktun(d_chan_name, d_ether_addr)) == -1) {
+//                fprintf(stderr,
+//                        "warning: was not able to open TUN device, "
+//                        "disabling Wireshark interface\n");
+//                // throw std::runtime_error("cannot open TUN device");
+//            }
+//        }
     }
 
     /*
@@ -91,94 +81,20 @@ namespace bluetooth {
             gr_vector_const_void_star& input_items,
             gr_vector_void_star&       output_items )
     {
-        double freq = d_low_freq + (d_high_freq - d_low_freq)/2;
-        gr_complex *ch_samples = new gr_complex[noutput_items+100000];
-        gr_vector_void_star btch( 1 );
-        btch[0] = ch_samples;
-        double on_channel_energy, snr;
-        //int ch_count = channel_samples( freq, input_items, btch, on_channel_energy, history() );
-        btch[0] = (gr_complex*) input_items[0];
-        int ch_count = history();
-
-        /* fm demod */
-        int fm_noutput_items = fm_demod->fixed_rate_ninput_to_noutput(ch_count);
-        gr_vector_const_void_star fm_in(1);
-        fm_in[0] = (gr_complex*) input_items[0];
-        float fm_out_stream[fm_noutput_items];
-        gr_vector_void_star fm_out(1);
-        fm_out[0] = &fm_out_stream[0];        
-        fm_noutput_items = fm_demod->work(fm_noutput_items, fm_in, fm_out);
-
-        /* mmcr */
-        /* number of input items */
-        int mm_ninput_items_stream = fm_noutput_items;
-        gr_vector_int mm_ninput_items(1);
-        mm_ninput_items[0] = mm_ninput_items_stream;
-        /* number of output items */
-        int mm_noutput_items = mm_ninput_items_stream;
-        /* input items */
-        gr_vector_const_void_star mm_in(1);
-        mm_in[0] = (float*) fm_out[0];
-        /* output items */
-        float mm_out_stream[mm_noutput_items];
-        gr_vector_void_star mm_out(1);
-        mm_out[0] = &mm_out_stream[0];
-        std::cout << mm_noutput_items << std::endl;
-        mm_noutput_items = mm_cr->general_work(mm_noutput_items, mm_ninput_items, mm_in, mm_out);
-
-        /* binary slicer */
-        int bs_noutput_items = bin_slice->fixed_rate_ninput_to_noutput(mm_noutput_items);
-        gr_vector_const_void_star bs_in(1);
-        bs_in[0] = (float*) mm_out[0];
-        float bs_out_stream[bs_noutput_items];
-        gr_vector_void_star bs_out(1);
-        bs_out[0] = &bs_out_stream[0];
-        bs_noutput_items = bin_slice->work(bs_noutput_items, bs_in, bs_out);
-
-//        int sym_length = history();
-//        char *symbols = new char[sym_length];
-//        int len = bs_noutput_items;
-//        symbols = (char*) bs_out[0];
-//        char *symp = symbols;
-
-        /* number of symbols available */
-        int sym_length = history();
-        char *symbols = new char[sym_length];
-        /* pointer to our starting place for sniff_ */
-        char *symp = symbols;
-        gr_vector_const_void_star cbtch( 1 );
-        cbtch[0] = ch_samples;
-        int len = channel_symbols( cbtch, symbols, ch_count );
-        delete [] ch_samples;
-
-        std::cout << len << std::endl;
-
-        int limit = ((len - SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE) < SYMBOLS_PER_BASIC_RATE_SLOT) ? 
-            (len - SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE) : SYMBOLS_PER_BASIC_RATE_SLOT;
-
-        /* look for multiple packets in this slot */
-        while (limit >= 0) {
-            /* index to start of packet */
-            int i = classic_packet::sniff_ac(symp, limit);
-            if (i >= 0) {
-                int step = i + SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE;
-                ac(&symp[i], len - i, freq, snr);
-                len   -= step;
-                if(step >= sym_length)
-                {
-                    fprintf(stderr, "Error: %s\n", "Bad step"); 
-                    abort();
-                }
-                symp   = &symp[step];
-                limit -= step;
-            } 
-            else {
-                break;
-            }
+        char* in = (char*) input_items[0];
+        int len = history()+noutput_items-1;
+        /* index to start of packet */
+        int offset = classic_packet::sniff_ac(in, len);
+        int items_consumed = 0;
+        if (offset>=0) {
+            ac(&in[offset], len-offset, d_channel_freq, offset);
+            items_consumed = offset + SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE;
         }
-        delete [] symbols;
-        d_cumulative_count += (int) d_samples_per_slot;
-
+        /* no AC in the whole range of limit */
+        else {
+            items_consumed = len;
+        }
+        d_cumulative_count += (int) items_consumed;
         /* 
          * The runtime system wants to know how many output items we
          * produced, assuming that this is equal to the number of input
@@ -186,19 +102,21 @@ namespace bluetooth {
          * time slot of input items so that our next run starts one slot
          * later.
          */
-        return (int) d_samples_per_slot;
+        return (int) items_consumed;
     }
 
     /* handle AC */
-    void no_filter_sniffer_impl::ac(char *symbols, int len, double freq, double snr)
+    void no_filter_sniffer_impl::ac(char *symbols, int max_len, double freq, int offset)
     {
         /* native (local) clock in 625 us */	
-        uint32_t clkn = (int) (d_cumulative_count / d_samples_per_slot) & 0x7ffffff;
-        classic_packet::sptr pkt = classic_packet::make(symbols, len, clkn, freq);
+        uint32_t clkn = (int) ((d_cumulative_count+offset-history()) / 625) & 0x7ffffff;
+        /* same clock in ms */
+        double time_ms = ((double) d_cumulative_count+offset-history())/1000;
+        classic_packet::sptr pkt = classic_packet::make(symbols, max_len, clkn, freq);
         uint32_t lap = pkt->get_LAP();
 
-        printf("time %6d, snr=%.1f, channel %2d, LAP %06x ", 
-                clkn, snr, pkt->get_channel( ), lap);
+        printf("time %6d (%6.1f ms), channel %2d, LAP %06x ", 
+                clkn, time_ms, pkt->get_channel( ), lap);
 
         if (pkt->header_present()) {
             if (!d_basic_rate_piconets[lap]) {

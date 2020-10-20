@@ -24,7 +24,7 @@ parameters:
 
 inputs:
 -   domain: stream
-    dtype: complex
+    dtype: byte
 
 templates:
     imports: import gr_bluetooth
