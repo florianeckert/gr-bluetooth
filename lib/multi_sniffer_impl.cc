@@ -92,7 +92,6 @@ namespace gr {
         int ch_count = channel_samples( freq, input_items, btch, on_channel_energy, history() );
         bool brok; // = check_basic_rate_squelch(input_items);
         bool leok = brok = check_snr( freq, on_channel_energy, snr, input_items );
-	leok = false;
 
         /* number of symbols available */
         if (brok || leok) {
