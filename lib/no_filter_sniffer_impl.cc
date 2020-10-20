@@ -45,7 +45,7 @@ namespace bluetooth {
      */
     no_filter_sniffer_impl::no_filter_sniffer_impl(double sample_rate, double center_freq,
             double squelch_threshold, bool tun)
-        : gr::sync_block ("bluetooth multi sniffer block",
+        : gr::sync_block ("bluetooth no filter sniffer block",
                 gr::io_signature::make (1, 1, sizeof (int8_t)),
                 gr::io_signature::make (0, 0, 0))
     {
