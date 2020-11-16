@@ -48,11 +48,13 @@ namespace bluetooth {
                 gr::io_signature::make (1, 1, sizeof (gr_complex)),
                 gr::io_signature::make (0, 0, 0))
     {
-        float gain = 3.125 / M_PI_2;
+        double samples_per_symbol = sample_rate / 1e6;
+
+        float gain = samples_per_symbol / M_PI_2;
         gr::analog::quadrature_demod_cf::sptr fm_demod = 
             gr::analog::quadrature_demod_cf::make(gain);
 
-        float omega = 3.125;
+        float omega = samples_per_symbol;
         float gain_mu = 0.175;
         float gain_omega = .25 * gain_mu * gain_mu;
         float mu = 0.32;
