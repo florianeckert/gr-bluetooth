@@ -30,5 +30,6 @@ install(FILES
     no_filter_sniffer.h
     single_sniffer.h
     packet.h
-    piconet.h DESTINATION include/bluetooth
+    piconet.h
+    many_channel_single_sniffer.h DESTINATION include/gr_bluetooth
 )

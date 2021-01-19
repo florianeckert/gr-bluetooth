@@ -1,0 +1,21 @@
+id: bluetooth_many_channel_single_sniffer
+label: Bluetooth Many Channel Single Sniffer
+category: '[Bluetooth]'
+templates:
+  imports: import gr_bluetooth
+  make: gr_bluetooth.many_channel_single_sniffer(${channels}, ${sample_rate})
+parameters:
+- id: channels
+  label: Channels
+  dtype: int_vector
+  default: [0,1]
+- id: sample_rate
+  label: Sample_rate
+  dtype: int
+  default: 3125000
+inputs:
+- label: in
+  domain: stream
+  dtype: complex
+  multiplicity: ${len(channels)}
+file_format: 1

@@ -27,6 +27,7 @@ BASE_NAME = BASE_NAME.make;
 #include "gr_bluetooth/multi_UAP.h"
 #include "gr_bluetooth/no_filter_sniffer.h"
 #include "gr_bluetooth/single_sniffer.h"
+#include "gr_bluetooth/many_channel_single_sniffer.h"
 %}
 
 %include "gr_bluetooth/packet.h"
@@ -51,3 +52,6 @@ GR_SWIG_BLOCK_MAGIC2(bluetooth, no_filter_sniffer);
 
 %include "gr_bluetooth/single_sniffer.h"
 GR_SWIG_BLOCK_MAGIC2(bluetooth, single_sniffer);
+
+%include "gr_bluetooth/many_channel_single_sniffer.h"
+GR_SWIG_BLOCK_MAGIC2(bluetooth, many_channel_single_sniffer);

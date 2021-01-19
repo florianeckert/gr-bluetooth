@@ -35,6 +35,7 @@ list(APPEND bluetooth_sources
     single_sniffer_impl.cc
     packet_impl.cc
     piconet_impl.cc
+    many_channel_single_sniffer_impl.cc
 )
 
 set(bluetooth_sources "${bluetooth_sources}" PARENT_SCOPE)
