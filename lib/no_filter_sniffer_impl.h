@@ -38,9 +38,14 @@ namespace bluetooth {
     class no_filter_sniffer_impl : virtual public no_filter_sniffer
     {
         private:
+            /* last time tag */
+            tag_t d_last_time_tag;
+            pmt::pmt_t d_tag_key;
+ 
             /* symbols per second */
             static const int SYMBOL_RATE = 1000000;
             static const int SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE = 68; 
+            static const int SYMBOLS_PER_BASIC_RATE_ACCESS_CODE = 72; 
 
             /* length of time slot in symbols */
             static const int SYMBOLS_PER_BASIC_RATE_SLOT    = 625;
@@ -51,9 +56,6 @@ namespace bluetooth {
 
             /* channel width in Hz */
             static const int CHANNEL_WIDTH = 1000000;
-
-            /* total number of samples elapsed */
-            uint64_t d_cumulative_count;
 
             /* frequency and number of the channel being decoded */
             double d_channel_freq;
@@ -67,7 +69,8 @@ namespace bluetooth {
             std::map<int, basic_rate_piconet::sptr> d_basic_rate_piconets;
 
             /* handle AC */
-            void ac(char *symbols, int max_len, double freq, int offset);
+//            void ac(char *symbols, int max_len, double freq, int offset);
+            void ac(char *symbols, int max_len, double freq, int abs_offset);
 
             /* handle ID packet (no header) */
             void id(uint32_t lap);

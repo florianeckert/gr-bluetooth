@@ -66,7 +66,7 @@ namespace bluetooth {
             gr::digital::binary_slicer_fb::make();
 
         no_filter_sniffer::sptr sniffer =
-            no_filter_sniffer::make(sample_rate, center_freq);
+            no_filter_sniffer::make(0.0, center_freq);
 
         connect(self(), 0, fm_demod, 0);
         connect(fm_demod, 0, mm_cr, 0);

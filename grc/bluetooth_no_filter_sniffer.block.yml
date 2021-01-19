@@ -5,10 +5,6 @@ label: Bluetooth No Filter Sniffer
 category: '[Bluetooth]'
 
 parameters:
--   id: sample_rate
-    label: Sample Rate
-    dtype: int 
-    default: samp_rate
 -   id: center_freq
     label: Center Frequency
     dtype: int 
@@ -20,6 +16,6 @@ inputs:
 
 templates:
     imports: import gr_bluetooth
-    make: gr_bluetooth.no_filter_sniffer(${sample_rate}, ${center_freq})
+    make: gr_bluetooth.no_filter_sniffer(0.0, ${center_freq})
 
 file_format: 1
