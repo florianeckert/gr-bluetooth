@@ -1080,6 +1080,23 @@ namespace gr {
           d_packet_type = air_to_host8(&d_packet_header[3], 4);
           return true;
         } else {
+          // try neighbour clocks
+          for (int i=-1; i<2; i=i+2) {
+            char tmp_packet_header[18];
+            unwhiten(header, tmp_packet_header, d_clock+i, 18, 0);
+            uint16_t hdr_data = air_to_host16(tmp_packet_header, 10);
+            uint8_t hec = air_to_host8(&tmp_packet_header[10], 8);
+            UAP = classic_packet::UAP_from_hec(hdr_data, hec);
+            if (UAP == d_UAP) { 
+              printf("clock offset by %d, ", i);
+              d_clock = d_clock + i;
+              for (int j=0; j<18; j++) {
+                d_packet_header[j] = tmp_packet_header[j];
+              }
+              d_packet_type = air_to_host8(&d_packet_header[3], 4);
+              return true;
+            }
+          }
           printf("bad HEC! %02x %02x %i ", UAP, d_UAP, air_to_host8(&d_packet_header[3], 4));
         }
       }
