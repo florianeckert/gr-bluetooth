@@ -21,7 +21,7 @@
 #ifndef INCLUDED_BLUETOOTH_MANY_CHANNEL_SINGLE_SNIFFER_IMPL_H
 #define INCLUDED_BLUETOOTH_MANY_CHANNEL_SINGLE_SNIFFER_IMPL_H
 
-#include <bluetooth/many_channel_single_sniffer.h>
+#include <gr_bluetooth/many_channel_single_sniffer.h>
 
 namespace gr {
   namespace bluetooth {
