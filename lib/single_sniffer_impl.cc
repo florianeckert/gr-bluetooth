@@ -27,11 +27,6 @@
 #include <gnuradio/io_signature.h>
 #include "single_sniffer_impl.h"
 
-#include <gnuradio/digital/clock_recovery_mm_ff.h>
-#include <gnuradio/analog/quadrature_demod_cf.h>
-#include <gnuradio/digital/binary_slicer_fb.h>
-#include "gr_bluetooth/no_filter_sniffer.h"
-
 namespace gr {
 namespace bluetooth {
 
@@ -51,27 +46,23 @@ namespace bluetooth {
         double samples_per_symbol = sample_rate / 1e6;
 
         float gain = samples_per_symbol / M_PI_2;
-        gr::analog::quadrature_demod_cf::sptr fm_demod = 
-            gr::analog::quadrature_demod_cf::make(gain);
+        d_fm_demod = gr::analog::quadrature_demod_cf::make(gain);
 
         float omega = samples_per_symbol;
         float gain_mu = 0.175;
         float gain_omega = .25 * gain_mu * gain_mu;
         float mu = 0.32;
         float omega_relative_limit = 0.005;
-        gr::digital::clock_recovery_mm_ff::sptr mm_cr =
-            gr::digital::clock_recovery_mm_ff::make(omega, gain_omega, mu, gain_mu, omega_relative_limit);
+        d_mm_cr = gr::digital::clock_recovery_mm_ff::make(omega, gain_omega, mu, gain_mu, omega_relative_limit);
 
-        gr::digital::binary_slicer_fb::sptr bin_slice =
-            gr::digital::binary_slicer_fb::make();
+        d_bin_slice = gr::digital::binary_slicer_fb::make();
 
-        no_filter_sniffer::sptr sniffer =
-            no_filter_sniffer::make(0.0, center_freq);
+        d_sniffer = no_filter_sniffer::make(0.0, center_freq);
 
-        connect(self(), 0, fm_demod, 0);
-        connect(fm_demod, 0, mm_cr, 0);
-        connect(mm_cr, 0, bin_slice, 0);
-        connect(bin_slice, 0, sniffer, 0);
+        connect(self(), 0, d_fm_demod, 0);
+        connect(d_fm_demod, 0, d_mm_cr, 0);
+        connect(d_mm_cr, 0, d_bin_slice, 0);
+        connect(d_bin_slice, 0, d_sniffer, 0);
     }
 
     /*

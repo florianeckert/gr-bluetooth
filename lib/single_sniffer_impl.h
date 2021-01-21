@@ -24,12 +24,22 @@
 #define INCLUDED_BLUETOOTH_GR_BLUETOOTH_SINGLE_SNIFFER_IMPL_H
 
 #include "gr_bluetooth/single_sniffer.h"
+#include <gnuradio/digital/clock_recovery_mm_ff.h>
+#include <gnuradio/analog/quadrature_demod_cf.h>
+#include <gnuradio/digital/binary_slicer_fb.h>
+#include "gr_bluetooth/no_filter_sniffer.h"
 
 namespace gr {
 namespace bluetooth {
 
     class single_sniffer_impl : virtual public single_sniffer
     {
+        private:
+            gr::analog::quadrature_demod_cf::sptr d_fm_demod;
+            gr::digital::clock_recovery_mm_ff::sptr d_mm_cr;
+            gr::digital::binary_slicer_fb::sptr d_bin_slice;
+            no_filter_sniffer::sptr d_sniffer;
+
         public:
             single_sniffer_impl(double sample_rate, double center_freq);
             ~single_sniffer_impl();
