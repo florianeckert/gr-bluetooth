@@ -49,7 +49,7 @@ namespace gr {
       for(int i=0; i<channels.size(); i++) {
         int channel = channels[i];
         int channel_freq = 2402000000 + channel*1000000;
-        single_sniffer::sptr sniffer = single_sniffer::make(sample_rate, channel_freq, pn_pointer);
+        single_sniffer::sptr sniffer = single_sniffer::make(sample_rate, channel_freq, pn_pointer, d_piconets_mutex);
         connect(self(), i, sniffer, 0);
       }
     }

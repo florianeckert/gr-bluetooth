@@ -65,7 +65,7 @@ namespace bluetooth {
 
             /* the piconets we are monitoring */
             map_ptr d_basic_rate_piconets;
-            std::mutex d_piconets_mutex;
+            std::mutex &d_piconets_mutex;
 
             void set_piconet(int lap, basic_rate_piconet::sptr pn);
             basic_rate_piconet::sptr get_piconet(int lap);
@@ -91,7 +91,7 @@ namespace bluetooth {
             void fhs(classic_packet::sptr pkt);
 
         public:
-            no_filter_sniffer_impl(double sample_rate, double center_freq, map_ptr piconets);
+            no_filter_sniffer_impl(double sample_rate, double center_freq, map_ptr piconets, std::mutex &piconets_mutex);
             ~no_filter_sniffer_impl();
 
             // Where all the action really happens

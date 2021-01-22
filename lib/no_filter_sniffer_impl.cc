@@ -33,20 +33,21 @@
 namespace gr {
 namespace bluetooth {
 
-    no_filter_sniffer::sptr no_filter_sniffer::make(double sample_rate, double center_freq, map_ptr piconets)
+    no_filter_sniffer::sptr no_filter_sniffer::make(double sample_rate, double center_freq, map_ptr piconets, std::mutex &piconets_mutex)
     {
-        return gnuradio::get_initial_sptr (new no_filter_sniffer_impl(sample_rate, center_freq, piconets));
+        return gnuradio::get_initial_sptr (new no_filter_sniffer_impl(sample_rate, center_freq, piconets, piconets_mutex));
     }
 
     /*
      * The private constructor
      */
-    no_filter_sniffer_impl::no_filter_sniffer_impl(double sample_rate, double center_freq, map_ptr piconets)
+    no_filter_sniffer_impl::no_filter_sniffer_impl(double sample_rate, double center_freq, map_ptr piconets, std::mutex &piconets_mutex)
         : gr::sync_block ("bluetooth no filter sniffer block",
                 gr::io_signature::make (1, 1, sizeof (int8_t)),
                 gr::io_signature::make (0, 0, 0)),
             d_tag_key(pmt::string_to_symbol("timestamp")),
-            d_basic_rate_piconets(piconets)
+            d_basic_rate_piconets(piconets),
+            d_piconets_mutex(piconets_mutex)
     {
         /* set channel_freq and channel to bluetooth channel closest to center freq */
         double center = (center_freq - BASE_FREQUENCY) / CHANNEL_WIDTH;

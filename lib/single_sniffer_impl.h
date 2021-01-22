@@ -41,7 +41,7 @@ namespace bluetooth {
             no_filter_sniffer::sptr d_sniffer;
 
         public:
-            single_sniffer_impl(double sample_rate, double center_freq, map_ptr piconets);
+            single_sniffer_impl(double sample_rate, double center_freq, map_ptr piconets, std::mutex &piconets_mutex);
             ~single_sniffer_impl();
     };
 

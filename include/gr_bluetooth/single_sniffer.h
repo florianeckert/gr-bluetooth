@@ -29,6 +29,7 @@
 #include "gr_bluetooth/piconet.h"
 #include <map>
 #include <memory>
+#include <mutex>
 
 namespace gr {
 namespace bluetooth {
@@ -52,7 +53,7 @@ namespace bluetooth {
              * class. gr::bluetooth::single_sniffer::make is the public interface for
              * creating new instances.
              */
-            static sptr make(double sample_rate, double center_freq, map_ptr piconets);
+            static sptr make(double sample_rate, double center_freq, map_ptr piconets, std::mutex &piconets_mutex);
     };
 
 } // namespace bluetooth

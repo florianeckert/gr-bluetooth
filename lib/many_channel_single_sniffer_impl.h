@@ -23,6 +23,7 @@
 
 #include <gr_bluetooth/many_channel_single_sniffer.h>
 #include <map>
+#include <mutex>
 #include "gr_bluetooth/piconet.h"
 
 namespace gr {
@@ -32,6 +33,7 @@ namespace gr {
     {
      private:
       std::map<int, basic_rate_piconet::sptr> d_piconets;
+      std::mutex d_piconets_mutex;
 
      public:
       many_channel_single_sniffer_impl(std::vector<int> channels, int sample_rate);
