@@ -30,15 +30,15 @@
 namespace gr {
 namespace bluetooth {
 
-    single_sniffer::sptr single_sniffer::make(double sample_rate, double center_freq)
+    single_sniffer::sptr single_sniffer::make(double sample_rate, double center_freq, map_ptr piconets)
     {
-        return gnuradio::get_initial_sptr (new single_sniffer_impl(sample_rate, center_freq));
+        return gnuradio::get_initial_sptr (new single_sniffer_impl(sample_rate, center_freq, piconets));
     }
 
     /*
      * The private constructor
      */
-    single_sniffer_impl::single_sniffer_impl(double sample_rate, double center_freq)
+    single_sniffer_impl::single_sniffer_impl(double sample_rate, double center_freq, map_ptr piconets)
         : gr::hier_block2 ("bluetooth single sniffer block",
                 gr::io_signature::make (1, 1, sizeof (gr_complex)),
                 gr::io_signature::make (0, 0, 0))
@@ -57,7 +57,7 @@ namespace bluetooth {
 
         d_bin_slice = gr::digital::binary_slicer_fb::make();
 
-        d_sniffer = no_filter_sniffer::make(0.0, center_freq);
+        d_sniffer = no_filter_sniffer::make(0.0, center_freq, piconets);
 
         connect(self(), 0, d_fm_demod, 0);
         connect(d_fm_demod, 0, d_mm_cr, 0);

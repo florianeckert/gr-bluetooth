@@ -45,10 +45,11 @@ namespace gr {
               gr::io_signature::make(channels.size(), channels.size(), sizeof(gr_complex)),
               gr::io_signature::make(0, 0, 0))
     {
+      single_sniffer::map_ptr pn_pointer = std::make_shared<std::map<int, basic_rate_piconet::sptr>>(d_piconets);
       for(int i=0; i<channels.size(); i++) {
         int channel = channels[i];
         int channel_freq = 2402000000 + channel*1000000;
-        single_sniffer::sptr sniffer = single_sniffer::make(sample_rate, channel_freq);
+        single_sniffer::sptr sniffer = single_sniffer::make(sample_rate, channel_freq, pn_pointer);
         connect(self(), i, sniffer, 0);
       }
     }

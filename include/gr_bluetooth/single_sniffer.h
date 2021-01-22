@@ -26,6 +26,9 @@
 
 #include <gr_bluetooth/api.h>
 #include <gnuradio/hier_block2.h>
+#include "gr_bluetooth/piconet.h"
+#include <map>
+#include <memory>
 
 namespace gr {
 namespace bluetooth {
@@ -39,6 +42,7 @@ namespace bluetooth {
     {
         public:
             typedef boost::shared_ptr<single_sniffer> sptr;
+            typedef std::shared_ptr<std::map<int, basic_rate_piconet::sptr>> map_ptr;
 
             /*!
              * \brief Return a shared_ptr to a new instance of gr::bluetooth::single_sniffer.
@@ -48,7 +52,7 @@ namespace bluetooth {
              * class. gr::bluetooth::single_sniffer::make is the public interface for
              * creating new instances.
              */
-            static sptr make(double sample_rate, double center_freq);
+            static sptr make(double sample_rate, double center_freq, map_ptr piconets);
     };
 
 } // namespace bluetooth

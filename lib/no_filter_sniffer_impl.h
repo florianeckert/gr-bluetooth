@@ -28,9 +28,7 @@
 
 #include "gr_bluetooth/no_filter_sniffer.h"
 #include "gr_bluetooth/packet.h"
-#include "gr_bluetooth/piconet.h"
 #include <math.h>
-#include <map>
 
 namespace gr {
 namespace bluetooth {
@@ -66,7 +64,11 @@ namespace bluetooth {
             static const uint32_t LIAC = 0x9E8B00;
 
             /* the piconets we are monitoring */
-            std::map<int, basic_rate_piconet::sptr> d_basic_rate_piconets;
+            map_ptr d_basic_rate_piconets;
+            std::mutex d_piconets_mutex;
+
+            void set_piconet(int lap, basic_rate_piconet::sptr pn);
+            basic_rate_piconet::sptr get_piconet(int lap);
 
             /* handle AC */
 //            void ac(char *symbols, int max_len, double freq, int offset);
@@ -89,7 +91,7 @@ namespace bluetooth {
             void fhs(classic_packet::sptr pkt);
 
         public:
-            no_filter_sniffer_impl(double sample_rate, double center_freq);
+            no_filter_sniffer_impl(double sample_rate, double center_freq, map_ptr piconets);
             ~no_filter_sniffer_impl();
 
             // Where all the action really happens

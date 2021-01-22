@@ -22,6 +22,8 @@
 #define INCLUDED_BLUETOOTH_MANY_CHANNEL_SINGLE_SNIFFER_IMPL_H
 
 #include <gr_bluetooth/many_channel_single_sniffer.h>
+#include <map>
+#include "gr_bluetooth/piconet.h"
 
 namespace gr {
   namespace bluetooth {
@@ -29,7 +31,7 @@ namespace gr {
     class many_channel_single_sniffer_impl : public many_channel_single_sniffer
     {
      private:
-      // Nothing to declare in this block.
+      std::map<int, basic_rate_piconet::sptr> d_piconets;
 
      public:
       many_channel_single_sniffer_impl(std::vector<int> channels, int sample_rate);

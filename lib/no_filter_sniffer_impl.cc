@@ -33,19 +33,20 @@
 namespace gr {
 namespace bluetooth {
 
-    no_filter_sniffer::sptr no_filter_sniffer::make(double sample_rate, double center_freq)
+    no_filter_sniffer::sptr no_filter_sniffer::make(double sample_rate, double center_freq, map_ptr piconets)
     {
-        return gnuradio::get_initial_sptr (new no_filter_sniffer_impl(sample_rate, center_freq));
+        return gnuradio::get_initial_sptr (new no_filter_sniffer_impl(sample_rate, center_freq, piconets));
     }
 
     /*
      * The private constructor
      */
-    no_filter_sniffer_impl::no_filter_sniffer_impl(double sample_rate, double center_freq)
+    no_filter_sniffer_impl::no_filter_sniffer_impl(double sample_rate, double center_freq, map_ptr piconets)
         : gr::sync_block ("bluetooth no filter sniffer block",
                 gr::io_signature::make (1, 1, sizeof (int8_t)),
                 gr::io_signature::make (0, 0, 0)),
-            d_tag_key(pmt::string_to_symbol("timestamp"))
+            d_tag_key(pmt::string_to_symbol("timestamp")),
+            d_basic_rate_piconets(piconets)
     {
         /* set channel_freq and channel to bluetooth channel closest to center freq */
         double center = (center_freq - BASE_FREQUENCY) / CHANNEL_WIDTH;
@@ -177,10 +178,10 @@ namespace bluetooth {
                 clkn, time_ms, pkt->get_channel( ), lap);
 
         if (pkt->header_present()) {
-            if (!d_basic_rate_piconets[lap]) {
-                d_basic_rate_piconets[lap] = basic_rate_piconet::make(lap);
+            if (!get_piconet(lap)) {
+                set_piconet(lap, basic_rate_piconet::make(lap));
             }
-            basic_rate_piconet::sptr pn = d_basic_rate_piconets[lap];
+            basic_rate_piconet::sptr pn = get_piconet(lap);
 
             if (pn->have_clk6() && pn->have_UAP()) {
                 decode(pkt, pn, true);
@@ -194,7 +195,7 @@ namespace bluetooth {
              * cause problems later.
              */
             if (lap == GIAC || lap == LIAC) {
-                d_basic_rate_piconets.erase(lap);
+                set_piconet(lap, NULL);
             }
         } 
         else {
@@ -298,16 +299,34 @@ namespace bluetooth {
         printf(", CLK %07x\n", clk);
 
         /* make use of this information from now on */
-        if (!d_basic_rate_piconets[lap]) {
-            d_basic_rate_piconets[lap] = basic_rate_piconet::make(lap);
+        if (!get_piconet(lap)) {
+            set_piconet(lap, basic_rate_piconet::make(lap));
         }
-        pn = d_basic_rate_piconets[lap];
+        pn = get_piconet(lap);
 
         pn->set_UAP(uap);
         pn->set_NAP(nap);
         pn->set_offset(offset);
         //FIXME if this is a role switch, the offset can have an error of as
         //much as 1.25 ms 
+    }
+
+    void no_filter_sniffer_impl::set_piconet(int lap, basic_rate_piconet::sptr pn) {
+        std::lock_guard<std::mutex> guard(d_piconets_mutex);
+        std::map<int, basic_rate_piconet::sptr> &piconets_map = *d_basic_rate_piconets;
+        if (!pn) {
+            piconets_map.erase(lap);
+            std::cout << "erased " << lap << std::endl;
+        }
+        else {
+            piconets_map[lap] = pn;
+        }
+    }
+
+    basic_rate_piconet::sptr no_filter_sniffer_impl::get_piconet(int lap) {
+        std::lock_guard<std::mutex> guard(d_piconets_mutex);
+        std::map<int, basic_rate_piconet::sptr> &piconets_map = *d_basic_rate_piconets;
+        return piconets_map[lap];
     }
 
 } /* namespace bluetooth */
