@@ -20,8 +20,6 @@
 install(FILES
     bluetooth_multi_hopper.block.yml
     bluetooth_multi_LAP.block.yml
-    bluetooth_no_filter_sniffer.block.yml
-    bluetooth_single_sniffer.block.yml
     bluetooth_multi_sniffer.block.yml
     bluetooth_multi_UAP.block.yml
     bluetooth_many_channel_single_sniffer.block.yml DESTINATION share/gnuradio/grc/blocks
