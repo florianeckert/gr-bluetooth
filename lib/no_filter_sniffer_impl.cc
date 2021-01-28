@@ -81,11 +81,11 @@ namespace bluetooth {
             std::vector<tag_t> v;
             get_tags_in_window(v, 0, 0, 1, d_tag_key);
             if (v.size()==0) {
-                std::out << "no time tag at start of stream, using regular sample mode" << std::endl;
+                std::cout << "no time tag at start of stream, using regular sample mode" << std::endl;
                 d_use_tags = false;
             }
             else {
-                std::out << "time tag detected at start of stream, using tag mode" << std::endl;
+                std::cout << "time tag detected at start of stream, using tag mode" << std::endl;
                 d_last_time_tag = v[0];
             }
         }
