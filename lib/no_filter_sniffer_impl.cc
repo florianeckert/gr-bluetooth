@@ -47,7 +47,8 @@ namespace bluetooth {
                 gr::io_signature::make (0, 0, 0)),
             d_tag_key(pmt::string_to_symbol("timestamp")),
             d_basic_rate_piconets(piconets),
-            d_piconets_mutex(piconets_mutex)
+            d_piconets_mutex(piconets_mutex),
+            d_use_tags(true)
     {
         /* set channel_freq and channel to bluetooth channel closest to center freq */
         double center = (center_freq - BASE_FREQUENCY) / CHANNEL_WIDTH;
@@ -76,25 +77,38 @@ namespace bluetooth {
             gr_vector_const_void_star& input_items,
             gr_vector_void_star&       output_items )
     {
-        if (d_last_time_tag.offset==UINT64_MAX) {
+        if (d_use_tags && d_last_time_tag.offset==UINT64_MAX) {
             std::vector<tag_t> v;
             get_tags_in_window(v, 0, 0, 1, d_tag_key);
             if (v.size()==0) {
-                std::cerr << "failed to find time tag at start of stream" << std::endl;
-                // unset mark to prevent errors
-                d_last_time_tag.offset=0;
+                std::out << "no time tag at start of stream, using regular sample mode" << std::endl;
+                d_use_tags = false;
             }
             else {
+                std::out << "time tag detected at start of stream, using tag mode" << std::endl;
                 d_last_time_tag = v[0];
             }
         }
-        std::vector<tag_t> tmp_v;
-        get_tags_in_window(tmp_v, 0, 0, noutput_items, d_tag_key);
-        for(std::vector<int>::size_type i = 0; i != tmp_v.size(); i++) {
-            float tmp_tag_time = pmt::to_float(tmp_v[i].value)/1000000;
-            //std::cout << "at " << tmp_v[i].offset << " - " << pmt::symbol_to_string(tmp_v[i].key) << ": " << tmp_tag_time << std::endl;
-        }
-      
+
+// DEBUG BEGIN
+//        std::vector<tag_t> tmp_v;
+//        get_tags_in_window(tmp_v, 0, 0, noutput_items, d_tag_key);
+//        for(std::vector<int>::size_type i = 0; i != tmp_v.size(); i++) {
+//            int tmp_tag_time = pmt::to_float(tmp_v[i].value);
+//            std::cout << "at " << tmp_v[i].offset << " - " << pmt::symbol_to_string(tmp_v[i].key) << ": " << tmp_tag_time << std::endl;
+
+//            tag_t tmp_last = (i>0) ? tmp_v[i-1] : d_last_time_tag;
+//            uint64_t offset = tmp_v[i].offset;
+//            float curr_time = pmt::to_float(tmp_v[i].value);
+//            if (offset > d_last_offset && curr_time < d_last_time) {
+//                std::cout << "NEGATIVE TIME" << std::endl;
+//                printf("last: %8ld ---> %8f\n", d_last_offset, d_last_time);
+//                printf("curr: %8ld ---> %8f\n", offset, curr_time);
+//            }
+//            d_last_time = curr_time;
+//            d_last_offset = offset;
+//        }
+// DEBUG END
 
         char* in = (char*) input_items[0];
         // search within the whole input buffer, i.e. number of inputs plus history
@@ -106,31 +120,40 @@ namespace bluetooth {
         
         // ac found -> handle it
         if (offset>=0) {
-            // calculate time of frame from tags
-            // look for most current tag
-            std::vector<tag_t> vec;
-            get_tags_in_window(vec, 0, 0, offset+1, d_tag_key);
-            tag_t tag;
-            if (vec.size()==0) {
-                tag = d_last_time_tag;
+            int abs_index;
+            if (d_use_tags) {
+                // calculate time of frame from tags
+                // look for most current tag
+                std::vector<tag_t> vec;
+                get_tags_in_window(vec, 0, 0, offset+1, d_tag_key);
+                tag_t tag;
+                if (vec.size()==0) {
+                    tag = d_last_time_tag;
+                }
+                else {
+                    tag = vec.back();
+                }
+                // calculate sample index from last tag
+                // received time from tag is expected to be µs
+                // 1 sample == 1µs, as this blocks sample rate is fixed at 1MHz
+                int tag_sample_index = (int) pmt::to_float(tag.value);
+                // absolute index of detected offset
+                int abs_off = nitems_read(0)+offset;
+                // sample index distance between last tag and detected offset
+                int tag_distance = abs_off - tag.offset;
+                std::cout << "tag distance: " << tag_distance << std::endl;
+
+                abs_index = tag_sample_index + tag_distance;
+
+                std::cout << "#samples: " << (int) tag_sample_index+tag_distance << std::endl;
+                std::cout << "time: " << (tag_sample_index+tag_distance)/1000000 << std::endl;
             }
             else {
-                tag = vec.back();
+                abs_index = nitems_read(0) + offset;
             }
-            // calculate sample index from last tag
-            // received time from tag is expected to be µs
-            // 1 sample == 1µs, as this blocks sample rate is fixed at 1MHz
-            int tag_sample_index = (int) pmt::to_float(tag.value);
-            // absolute index of detected offset
-            int abs_off = nitems_read(0)+offset;
-            // sample index distance between last tag and detected offset
-            int tag_distance = abs_off - tag.offset;
-            std::cout << "tag distance: " << tag_distance << std::endl;
             
             // handle ac at detected index/offset. max_len is remaining items in buffer
-            ac(&in[offset], search_length-offset, d_channel_freq, tag_sample_index+tag_distance);
-            std::cout << "#samples: " << (int) tag_sample_index+tag_distance << std::endl;
-            std::cout << "time: " << (tag_sample_index+tag_distance)/1000000 << std::endl;
+            ac(&in[offset], search_length-offset, d_channel_freq, abs_index);
             // we consume only one shortened access code (and all items before) as we want
             // to look for potential new access codes after this
             items_consumed = offset + SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE;

@@ -66,12 +66,16 @@ namespace bluetooth {
             /* the piconets we are monitoring */
             map_ptr d_basic_rate_piconets;
             std::mutex &d_piconets_mutex;
+            bool d_use_tags;
+// DEBUG
+//            float d_last_time;
+//            uint64_t d_last_offset;
+// DEBUG END
 
             void set_piconet(int lap, basic_rate_piconet::sptr pn);
             basic_rate_piconet::sptr get_piconet(int lap);
 
             /* handle AC */
-//            void ac(char *symbols, int max_len, double freq, int offset);
             void ac(char *symbols, int max_len, double freq, int abs_offset);
 
             /* handle ID packet (no header) */
