@@ -26,6 +26,7 @@
 
 #include <gnuradio/io_signature.h>
 #include "single_sniffer_impl.h"
+#include <gnuradio/blocks/tag_debug.h>
 
 namespace gr {
 namespace bluetooth {
@@ -58,6 +59,12 @@ namespace bluetooth {
         d_bin_slice = gr::digital::binary_slicer_fb::make();
 
         d_sniffer = no_filter_sniffer::make(0.0, center_freq, piconets, piconets_mutex);
+
+// DEBUG BEGIN
+//        gr::blocks::tag_debug::sptr tag_debug_flo = gr::blocks::tag_debug::make(sizeof(float), "Float Sized Tag Debug", "timestamp");
+//        connect(d_fm_demod, 0, tag_debug_flo, 0);
+//        connect(d_mm_cr, 0, tag_debug_flo, 0);
+// DEBUG END
 
         connect(self(), 0, d_fm_demod, 0);
         connect(d_fm_demod, 0, d_mm_cr, 0);
