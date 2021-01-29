@@ -56,7 +56,7 @@ namespace bluetooth {
         d_channel_freq = BASE_FREQUENCY + (d_channel * CHANNEL_WIDTH);
 
         ///* we want to have 5 slots (max packet length) available in the history */
-        //set_history((sample_rate/SYMBOL_RATE)*SYMBOLS_FOR_BASIC_RATE_HISTORY);
+        set_history(SYMBOLS_FOR_BASIC_RATE_HISTORY);
 
         // keep length of one access code in history to detect new frames
         //set_history((sample_rate/SYMBOL_RATE)*SYMBOLS_PER_BASIC_RATE_ACCESS_CODE);
@@ -151,6 +151,7 @@ namespace bluetooth {
             else {
                 abs_index = nitems_read(0) + offset;
             }
+            abs_index-=history()-1;
             
             // handle ac at detected index/offset. max_len is remaining items in buffer
             ac(&in[offset], search_length-offset, d_channel_freq, abs_index);
