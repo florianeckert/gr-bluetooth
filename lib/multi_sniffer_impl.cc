@@ -84,7 +84,8 @@ namespace gr {
                               gr_vector_const_void_star& input_items,
                               gr_vector_void_star&       output_items )
     {
-      for (double freq = d_low_freq; freq <= d_high_freq; freq += 1e6) {   
+//      for (double freq = d_low_freq; freq <= d_high_freq; freq += 1e6) {   
+        double freq = d_low_freq + (d_high_freq-d_low_freq)/2;
         gr_complex *ch_samples = new gr_complex[noutput_items+100000];
         gr_vector_void_star btch( 1 );
         btch[0] = ch_samples;
@@ -92,6 +93,7 @@ namespace gr {
         int ch_count = channel_samples( freq, input_items, btch, on_channel_energy, history() );
         bool brok; // = check_basic_rate_squelch(input_items);
         bool leok = brok = check_snr( freq, on_channel_energy, snr, input_items );
+        leok = false;
 
         /* number of symbols available */
         if (brok || leok) {
@@ -108,22 +110,22 @@ namespace gr {
             int limit = ((len - SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE) < SYMBOLS_PER_BASIC_RATE_SLOT) ? 
               (len - SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE) : SYMBOLS_PER_BASIC_RATE_SLOT;
         
-            /* look for multiple packets in this slot */
-            while (limit >= 0) {
-              /* index to start of packet */
-              int i = classic_packet::sniff_ac(symp, limit);
-              if (i >= 0) {
-                int step = i + SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE;
-                ac(&symp[i], len - i, freq, snr);
-                len   -= step;
-				if(step >= sym_length) error_out("Bad step");
-                symp   = &symp[step];
-                limit -= step;
-              } 
-              else {
-                break;
-              }
-            }
+//            /* look for multiple packets in this slot */
+//            while (limit >= 0) {
+//              /* index to start of packet */
+//              int i = classic_packet::sniff_ac(symp, limit);
+//              if (i >= 0) {
+//                int step = i + SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE;
+//                ac(&symp[i], len - i, freq, snr);
+//                len   -= step;
+//				if(step >= sym_length) error_out("Bad step");
+//                symp   = &symp[step];
+//                limit -= step;
+//              } 
+//              else {
+//                break;
+//              }
+//            }
           }
 
           if (leok) {
@@ -152,7 +154,7 @@ namespace gr {
         else {
           delete [] ch_samples;
         }
-      }
+//      }
       d_cumulative_count += (int) d_samples_per_slot;
       
       /* 

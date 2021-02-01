@@ -118,54 +118,57 @@ namespace bluetooth {
         int offset = classic_packet::sniff_ac(in, search_length);
         int items_consumed = 0;
         
-        // ac found -> handle it
-        if (offset>=0) {
-            // absolute index of detected offset
-            int abs_index = nitems_read(0) + offset - history() + 1;
-            if (d_use_tags) {
-                // calculate time of frame from tags
-                // look for most current tag
-                std::vector<tag_t> vec;
-                get_tags_in_window(vec, 0, 0, offset+1, d_tag_key);
-                tag_t tag;
-                // if there is no tag in the current buffer, take the last one
-                if (vec.size()==0) {
-                    tag = d_last_time_tag;
-                }
-                else {
-                    tag = vec.back();
-                }
+//        // ac found -> handle it
+//        if (offset>=0) {
+//            // absolute index of detected offset
+//            int abs_index = nitems_read(0) + offset - history() + 1;
+//            if (d_use_tags) {
+//                // calculate time of frame from tags
+//                // look for most current tag
+//                std::vector<tag_t> vec;
+//                get_tags_in_window(vec, 0, 0, offset+1, d_tag_key);
+//                tag_t tag;
+//                // if there is no tag in the current buffer, take the last one
+//                if (vec.size()==0) {
+//                    tag = d_last_time_tag;
+//                }
+//                else {
+//                    tag = vec.back();
+//                }
+//
+//                // calculate index of last tag from timestamp
+//                // received time from tag is expected to be µs
+//                // 1 sample == 1µs, as this blocks sample rate is fixed at 1MHz
+//                int tag_sample_index = (int) pmt::to_float(tag.value);
+//                // distance between the detected offset and the last tag
+//                int tag_distance = abs_index - tag.offset;
+//                std::cout << "tag distance: " << tag_distance << std::endl;
+//
+//                abs_index = tag_sample_index + tag_distance;
+//
+//                std::cout << "#samples: " << (int) tag_sample_index+tag_distance << std::endl;
+//                std::cout << "time: " << (tag_sample_index+tag_distance)/1000000 << std::endl;
+//            }
+//            abs_index = abs_index - history() + 1;
+//            
+//            // handle ac at detected index/offset. max_len is remaining items in buffer
+//            ac(&in[offset], search_length-offset, d_channel_freq, abs_index);
+//            // we consume only one shortened access code (and all items before) as we want
+//            // to look for potential new access codes after this
+//            items_consumed = offset + SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE;
+//            // make sure we dont consume too much
+//            // this should not be possible in theory, as then no access code would have been
+//            // detected
+//            items_consumed = (items_consumed > noutput_items) ? noutput_items : items_consumed;
+//        }
+//        // no AC was found in the whole buffer
+//        else {
+//            // we can consume all new items
+//            items_consumed = noutput_items;
+//        }
 
-                // calculate index of last tag from timestamp
-                // received time from tag is expected to be µs
-                // 1 sample == 1µs, as this blocks sample rate is fixed at 1MHz
-                int tag_sample_index = (int) pmt::to_float(tag.value);
-                // distance between the detected offset and the last tag
-                int tag_distance = abs_index - tag.offset;
-                std::cout << "tag distance: " << tag_distance << std::endl;
+        items_consumed = noutput_items;
 
-                abs_index = tag_sample_index + tag_distance;
-
-                std::cout << "#samples: " << (int) tag_sample_index+tag_distance << std::endl;
-                std::cout << "time: " << (tag_sample_index+tag_distance)/1000000 << std::endl;
-            }
-            abs_index = abs_index - history() + 1;
-            
-            // handle ac at detected index/offset. max_len is remaining items in buffer
-            ac(&in[offset], search_length-offset, d_channel_freq, abs_index);
-            // we consume only one shortened access code (and all items before) as we want
-            // to look for potential new access codes after this
-            items_consumed = offset + SYMBOLS_PER_BASIC_RATE_SHORTENED_ACCESS_CODE;
-            // make sure we dont consume too much
-            // this should not be possible in theory, as then no access code would have been
-            // detected
-            items_consumed = (items_consumed > noutput_items) ? noutput_items : items_consumed;
-        }
-        // no AC was found in the whole buffer
-        else {
-            // we can consume all new items
-            items_consumed = noutput_items;
-        }
         // save last tag in case next time a frame is detected w/o a tag for items in the buffer
         std::vector<tag_t> v;
         get_tags_in_window(v, 0, 0, noutput_items, d_tag_key);
