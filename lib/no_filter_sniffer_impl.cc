@@ -113,34 +113,35 @@ namespace bluetooth {
         char* in = (char*) input_items[0];
         // search within the whole input buffer, i.e. number of inputs plus history
         // (minus 1 as history includes first unconsumed input item) 
-        int search_length = history()-1+noutput_items;
+        int search_length = history() - 1 + noutput_items;
         // find index to start of packet via access code
         int offset = classic_packet::sniff_ac(in, search_length);
         int items_consumed = 0;
         
         // ac found -> handle it
         if (offset>=0) {
-            int abs_index;
+            // absolute index of detected offset
+            int abs_index = nitems_read(0) + offset - history() + 1;
             if (d_use_tags) {
                 // calculate time of frame from tags
                 // look for most current tag
                 std::vector<tag_t> vec;
                 get_tags_in_window(vec, 0, 0, offset+1, d_tag_key);
                 tag_t tag;
+                // if there is no tag in the current buffer, take the last one
                 if (vec.size()==0) {
                     tag = d_last_time_tag;
                 }
                 else {
                     tag = vec.back();
                 }
-                // calculate sample index from last tag
+
+                // calculate index of last tag from timestamp
                 // received time from tag is expected to be µs
                 // 1 sample == 1µs, as this blocks sample rate is fixed at 1MHz
                 int tag_sample_index = (int) pmt::to_float(tag.value);
-                // absolute index of detected offset
-                int abs_off = nitems_read(0)+offset;
-                // sample index distance between last tag and detected offset
-                int tag_distance = abs_off - tag.offset;
+                // distance between the detected offset and the last tag
+                int tag_distance = abs_index - tag.offset;
                 std::cout << "tag distance: " << tag_distance << std::endl;
 
                 abs_index = tag_sample_index + tag_distance;
@@ -148,10 +149,7 @@ namespace bluetooth {
                 std::cout << "#samples: " << (int) tag_sample_index+tag_distance << std::endl;
                 std::cout << "time: " << (tag_sample_index+tag_distance)/1000000 << std::endl;
             }
-            else {
-                abs_index = nitems_read(0) + offset;
-            }
-            abs_index-=history()-1;
+            abs_index = abs_index - history() + 1;
             
             // handle ac at detected index/offset. max_len is remaining items in buffer
             ac(&in[offset], search_length-offset, d_channel_freq, abs_index);
